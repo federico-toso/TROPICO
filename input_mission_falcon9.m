@@ -32,7 +32,7 @@ phases(i).xbounds = [10, 100e3;...            % altitude
                      10, 8e3; ...           % velocity
                      -pi/2, pi/2; 0, 2*pi; ...                                  % FPA, heading
                      -pi/2, pi/2; -pi, pi; ...       % lat, lon
-                     1, 550e3+1];                           % mass
+                     phases(i).vehicle.m0, phases(i).vehicle.gtow+1];                           % mass
 phases(i).cbounds = [0, 0; 1, 1; 0, 0]; % [min, max] for alpha, throttle, beta
 phases(i).fg = [0, 1, 0];     % starting guess for controls, can be any number of points > 2 for each control variable
 % phases(i).controls_no_match = [0, 1 ,0];
@@ -62,7 +62,7 @@ phases(i).xbounds = [10, 100e3;...            % altitude
                      10, 8e3; ...           % velocity
                      -pi/2, pi/2; 0, 2*pi; ...                                  % FPA, heading
                      -pi/2, pi/2; -pi, pi; ...       % lat, lon
-                     1, 550e3];                           % mass
+                     phases(i).vehicle.m0, phases(i).vehicle.gtow+1];                           % mass
 phases(i).cbounds = [-20*pi/180, 20*pi/180; 0, 1; 0, 0]; % [min, max] for alpha, throttle, beta
 phases(i).fg = [0, 1, 0];     % starting guess for controls, can be any number of points > 2 for each control variable
 % phases(i).controls_no_match = [0, 1 ,0];
@@ -87,12 +87,12 @@ phases(i).nc   = 6;            % number of control nodes for each element within
 % phases(i).x0 =          [15e3,  0.7*300, 0, pi/2, -5*pi/180, 55*pi/180, 550e3];
 % phases(i).x0_no_opt =   [1, 1, 1, 0, 0, 0, 1];                              % id of fixed starting values
 phases(i).xf =          [200e3, 7.8e3, 0, pi/2, 0, 0, 50e3];
-phases(i).xf_fixed =    [1, 1, 0, 0, 0, 0, 0];                              % id of target  value
+phases(i).xf_fixed =    [1, 0, 0, 0, 0, 0, 0];                              % id of target  value
 phases(i).xbounds = [1e3, 200e3;...            % altitude
                      100, 8e3; ...           % velocity
                      -pi/2, pi/2; 0, 2*pi; ...                                  % FPA, heading
                      -pi/2, pi/2; -pi, pi; ...       % lat, lon
-                     1, 150e3];                           % mass
+                     phases(i).vehicle.m0, phases(i).vehicle.gtow+1];                           % mass
 phases(i).cbounds = [-20*pi/180, 20*pi/180; 0, 1; 0, 0]; % [min, max] for alpha, throttle, beta
 phases(i).fg = [0, 1, 0];     % starting guess for controls, can be any number of points > 2 for each control variable
 phases(i).controls_no_match = [0, 1 ,0];
@@ -109,7 +109,7 @@ phases(i).thermal = @temp_convradbalance;
 phases(i).inte = @interp_pch_mex;
 phases(i).dist = @linspace; %@dist_chebyshev_mod;
 
-% phases(i).ceq = {'ceq_circ',0};
+phases(i).ceq = {'ceq_circ',0};
 
 %% general constraints, cost function, settings and additional variables
 param.c = {'c_acc', [6,6];
@@ -135,8 +135,8 @@ param.fg = {'lhs_fmincon',1.5};
 % mp) and second stage GTOW------------------------------------------------
 % comment out the voices that are not needed, set equal bounds to multiply
 
-param.Scale_S1_Engine = [7,7*1.25];
-param.Scale_S2_Engine = [0.9,0.9*1.25];
+param.Scale_S1_Engine = [7,7*1.1];
+param.Scale_S2_Engine = [0.9,0.9*1.1];
 % param.Scale_S1_Surf = [1,1];
 % param.Scale_S2_Surf = [1,1];
 % param.Scale_S2_GTOW = [1e3,1e3];

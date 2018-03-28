@@ -1,4 +1,4 @@
-function advanced_plots (phases, res)
+function advanced_plots (phases, res, forces, accelerations, Mn, thermal)
 
 loadconstants
 
@@ -51,20 +51,23 @@ end
 
 
 index = 0;
+con_counter = 0;
 for ip = 1:numel(phases)
     for ine = 1:phases(ip).ne
         index=index+1;
-        L=[];   D=[];   FT=[];  acc=[];   Mn=[];  temp=[];    q=[];
-        for iicc = 1 : size(res(index).t,2)
-            [~, con]= phases(ip).dynamics(res(index).t(iicc), res(index).x(iicc,:), res(index).control, const, phases(ip));
-            L = [L; con.forces(1)];
-            D = [D; con.forces(2)];
-            FT = [FT; con.forces(3)];
-            q = [q; con.forces(4)];
-            acc = [acc; con.acc, hypot(con.acc(1),con.acc(2))];
-            Mn = [Mn; con.Mn];
-            temp=[temp; con.temp];
-        end
+
+        time_points = size(res(index).t,2);
+        
+        L = forces(con_counter+1:con_counter+time_points,1);
+        D = forces(con_counter+1:con_counter+time_points,2);
+        FT = forces(con_counter+1:con_counter+time_points,3);
+        q = forces(con_counter+1:con_counter+time_points,4);        
+        XZacc = accelerations(con_counter+1:con_counter+time_points,:);        
+        acc = [XZacc, hypot(XZacc(:,1),XZacc(:,2))];
+        Mach = Mn(con_counter+1:con_counter+time_points);   
+        temp = thermal(con_counter+1:con_counter+time_points);   
+
+        con_counter = con_counter + time_points;
         
         subplot(2,3,1),hold on
         xlabel('Time [s]')
@@ -76,16 +79,22 @@ for ip = 1:numel(phases)
         subplot(2,3,2),hold on
         xlabel('Time [s]')
         ylabel('Mach number')
-        plot (res(index).t,Mn,...
+        plot (res(index).t,Mach,...
             'Color', phases(ip).plotcolor,'Marker',plotmar,'LineWidth',plotlw,'LineStyle',plotst)
-        plot(res(index).t(end),Mn(end),'k+')
+        plot(res(index).t(end),Mach(end),'k+')
         
         subplot(2,3,3),hold on
         xlabel('Time [s]')
-        ylabel('Thrust [kN]')
+        ylabel('forces [kN]')
         plot (res(index).t,FT./1e3,...
             'Color', phases(ip).plotcolor,'Marker',plotmar,'LineWidth',plotlw,'LineStyle',plotst)
         plot(res(index).t(end),FT(end)./1e3,'k+')
+        plot (res(index).t,L./1e3,...
+            'Color', 'k','Marker',plotmar,'LineWidth',plotlw-0.5,'LineStyle',plotst)
+        plot(res(index).t(end),L(end)./1e3,'k+')        
+        plot (res(index).t,D./1e3,...
+            'Color', 'k','Marker',plotmar,'LineWidth',plotlw-0.5,'LineStyle',plotst)
+        plot(res(index).t(end),D(end)./1e3,'k+')
         
         subplot(2,3,4),hold on
         xlabel('Time [s]')

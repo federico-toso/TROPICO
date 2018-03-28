@@ -4,9 +4,10 @@ index=0;
 for ip = 1 : param.np                                                       % select phase
     for ine = 1 : phases(ip).ne                                             % select element
         index = index+1;                                                    % propagate trajectory
-        if isequal(phases(ip).ode,@ode1) || isequal(phases(ip).ode,@ode2) || isequal(phases(ip).ode,@ode3) ||isequal(phases(ip).ode,@ode4) ||isequal(phases(ip).ode,@ode5)
+        switch func2str(phases(ip).ode)
+        case {'ode1', 'ode2', 'ode3', 'ode4', 'ode5'}
             res(index).x=phases(ip).ode(phases(ip).dynamics,res(index).t, res(index).x0, res(index).control, const, phases(ip));
-        else %use matlab's ode
+        otherwise %use matlab's ode
             [~,res(index).x]=phases(ip).ode(phases(ip).dynamics,res(index).t, res(index).x0, [], res(index).control, const, phases(ip));
         end
         if size(res(index).t,2) ~= size(res(index).x,1) %this routine fixes the output of a stiff problem solved with matlab's ode

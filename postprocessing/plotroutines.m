@@ -1,4 +1,4 @@
-function plotroutines(phases, res)
+function plotroutines(phases, res, controls)
     
 % initialize plot style
 % plotcol = 'k';
@@ -47,19 +47,21 @@ for ip = 1:numel(phases)
 end
 
 index = 0;
+control_counter = 0;
 for ip = 1:numel(phases)
     for ine = 1:phases(ip).ne
         index=index+1;
-        extracted=[];
-        for itime = 1:size(res(index).t,2)
-            extracted(itime,:) = phases(ip).inte(res(index).control,res(index).t(itime));
-            extracted(itime,:) = max(min(extracted(itime,:),phases(ip).cbounds(:,2)'), phases(ip).cbounds(:,1)');
-        end
-
+        
+        time_points = size(res(index).t,2);
+        
+        element_controls = controls(control_counter+1:control_counter+time_points,:);
+        
+        control_counter = control_counter + time_points;
+        
         subplot(4,2,1),hold on
         xlabel('Time [s]')
         ylabel('AoA [deg]')
-        plot (res(index).t,rad2deg(extracted(:,1)),...
+        plot (res(index).t,rad2deg(element_controls(:,1)),...
             'Color', phases(ip).plotcolor,'Marker',plotmar,'LineWidth',plotlw,'LineStyle',plotst)
         plot(res(index).control(:,1),rad2deg(res(index).control(:,2)),'ko')
         plot(res(index).control(end,1),rad2deg(res(index).control(end,2)),'k+')
@@ -67,7 +69,7 @@ for ip = 1:numel(phases)
         subplot(4,2,2),hold on
         xlabel('Time [s]')
         ylabel('Throttle')
-        plot (res(index).t,max(min(extracted(:,2),1),0),...
+        plot (res(index).t,max(min(element_controls(:,2),1),0),...
             'Color', phases(ip).plotcolor,'Marker',plotmar,'LineWidth',plotlw,'LineStyle',plotst)
         plot(res(index).control(:,1),res(index).control(:,3),'ko')
         plot(res(index).control(end,1),res(index).control(end,3),'k+')
@@ -75,7 +77,7 @@ for ip = 1:numel(phases)
         subplot(4,2,3),hold on
         xlabel('Time [s]')
         ylabel('Roll [deg]')
-        plot (res(index).t,rad2deg(extracted(:,3)),...
+        plot (res(index).t,rad2deg(element_controls(:,3)),...
             'Color', phases(ip).plotcolor,'Marker',plotmar,'LineWidth',plotlw,'LineStyle',plotst)
         plot(res(index).control(:,1),rad2deg(res(index).control(:,4)),'ko')
         plot(res(index).control(end,1),rad2deg(res(index).control(end,4)),'k+')
@@ -111,7 +113,7 @@ for ip = 1:numel(phases)
         subplot(4,2,8),hold on
         xlabel('Time [s]')
         ylabel('Mass [ton]')
-        plot (res(index).t,(res(index).x(:,7))./1000,...
+        semilogy (res(index).t,(res(index).x(:,7))./1000,...
             'Color', phases(ip).plotcolor,'Marker',plotmar,'LineWidth',plotlw,'LineStyle',plotst)
         plot(res(index).t(end),(res(index).x(end,7))./1000,'k+')
     end

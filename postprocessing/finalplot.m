@@ -68,7 +68,20 @@ for ip = 1:numel(phases)
         ylabel('Relative FPA [deg]')
         plot([res(index).t(1), res(index).t(end)], rad2deg([phases(ip).xbounds(3,1), phases(ip).xbounds(3,1)]),'k:')
         plot([res(index).t(1), res(index).t(end)], rad2deg([phases(ip).xbounds(3,2), phases(ip).xbounds(3,2)]),'k:')
-    
+        
+        subplot(4,2,7),hold on
+        if ip==1 && ine==1
+            geoshow('landareas.shp', 'FaceColor', [0.5 1.0 0.5]);
+            minlat = +pi;   maxlat = -pi;   minlon = pi/2;  maxlon = -pi/2;
+        end
+        minlat = min(min(res(index).x(:,5)),minlat);
+        maxlat = max(max(res(index).x(:,5)),maxlat);
+        minlon = min(min(res(index).x(:,6)),minlon);
+        maxlon = max(max(res(index).x(:,6)),maxlon);
+        if ip==numel(phases) && ine==phases(ip).ne
+            axis(rad2deg([minlon-0.1, maxlon+0.1, minlat-0.1, maxlat+0.1]))
+        end
+        
         subplot(4,2,8),hold on
         xlabel('Time [s]')
         ylabel('Mass [ton]')
@@ -94,18 +107,20 @@ for ip = 1:numel(phases)
         figure(3)
         [xeci,yeci,zeci]=enu2ecef(0,0,0,res(index).x(:,5),res(index).x(:,6),res(index).x(:,1),E,'radians');
         plot3(xeci,-yeci,zeci, 'color', phases(ip).plotcolor, 'LineWidth', 2), hold on
-        if ~isempty(param.no_fly)
-            no_fly_arc = param.no_fly(:,3)./const.rE;
-            [nfzlat,nfzlon] = scircle1(param.no_fly(:,1),param.no_fly(:,2),no_fly_arc);
-            theta=-pi:pi/100:pi;
-            xcirc = cos(theta);
-            ycirc = sin(theta);
-            zcirc = 0*theta;
-            for ici = 1 : size(nfzlat,2)
-                [xnfz,ynfz,znfz] =  enu2ecef(param.no_fly(ici,3).*xcirc,param.no_fly(ici,3).*ycirc,zcirc,...
-                                    param.no_fly(ici,1),param.no_fly(ici,2),const.rE*cos(no_fly_arc(ici)),...
-                                    referenceSphere,'radians');
-                plot3(xnfz,-ynfz,znfz, 'color', 'r', 'LineWidth', 1)
+        if isfield(param,'no_fly')
+            if ~isempty(param.no_fly)
+                no_fly_arc = param.no_fly(:,3)./const.rE;
+                [nfzlat,nfzlon] = scircle1(param.no_fly(:,1),param.no_fly(:,2),no_fly_arc);
+                theta=-pi:pi/100:pi;
+                xcirc = cos(theta);
+                ycirc = sin(theta);
+                zcirc = 0*theta;
+                for ici = 1 : size(nfzlat,2)
+                    [xnfz,ynfz,znfz] =  enu2ecef(param.no_fly(ici,3).*xcirc,param.no_fly(ici,3).*ycirc,zcirc,...
+                                        param.no_fly(ici,1),param.no_fly(ici,2),const.rE*cos(no_fly_arc(ici)),...
+                                        referenceSphere,'radians');
+                    plot3(xnfz,-ynfz,znfz, 'color', 'r', 'LineWidth', 1)
+                end
             end
         end
         

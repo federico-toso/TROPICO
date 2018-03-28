@@ -21,18 +21,19 @@ c0_opt = first guess refined
 %% initial setup
 c0_opt=c0;                              % optimizer vector is temporarily the first guess
 usefmincon = 0; usega = 0;
-if strcmp(param.fg{1},'lhs_fmincon')    % use matlab's fmincon and lhs to generate first guess
+switch param.fg{1}
+case 'lhs_fmincon'    % use matlab's fmincon and lhs to generate first guess
     usefmincon = 1;                 
-elseif strcmp(param.fg{1},'ga')         % use matlab's ga to generate first guess
+case 'ga'         % use matlab's ga to generate first guess
     usega = 1;
-elseif strcmp(param.fg{1},'load')
+case 'load'
     load(param.fg{2},'c0')
     c0_opt = c0;%(1:end-1);
     disp ('Previous solution loaded, Skipping first guess generation')
     disp('-------------------------------------------------------------------')
     return
-elseif strcmp(param.fg{1},'load_noise')
-%     load(param.fg{2},'c0')
+case 'load_noise'
+%    load(param.fg{2},'c0')
     c0 = param.fg{2};
     options=optimset('Display', 'none' ,'MaxFunEvals',size(c0,2)*250,...
         'ScaleProblem','none','Algorithm', 'sqp','TolCon', 1e-3,'UseParallel',true);
@@ -41,10 +42,10 @@ elseif strcmp(param.fg{1},'load_noise')
         c0_noise = c0+10^(inoise)*c0.*(-0.5+rand(1,length(c0)));
         [c0,~,exitflag] = objconstr (c0_noise, LB, UB, options, param, phases);
         disp([datestr(now,'HH:MM dd-mmm'),' | New exitflag = ',num2str(exitflag)])
-        [~,c,ceq] = compute_cost_const(c0, param, phases);
+      [~,c,ceq] = compute_cost_const(c0, param, phases);
         if exitflag >=0 && max(c)<=1e-4 && max(abs(ceq))<=1e-4
             disp([datestr(now,'HH:MM dd-mmm'),' | Positive exitflag, minimum recovered, breaking'])
-            c0_opt = c0;
+             c0_opt = c0;
             eval_plot (c0_opt, param, phases), drawnow, pause (0.5)
             disp ('Previous solution loaded, Skipping first guess generation')
             disp('-------------------------------------------------------------------')
@@ -53,17 +54,17 @@ elseif strcmp(param.fg{1},'load_noise')
     end
     usefmincon = 1;
     param.fg{2} = 1;
-elseif strcmp(param.fg{1},'load_last')
+case 'load_last'
     load(param.fg{2},'c0')
     disp ('Previous solution loaded, Skipping first guess generation')
     disp('-------------------------------------------------------------------')
     return
-elseif strcmp(param.fg{1},'random')
+case 'random'
     c0_opt = rand(size(c0));
     disp ('Random guess generated, Skipping first guess generation')
     disp('-------------------------------------------------------------------')
     return
-elseif strcmp(param.fg{1},'lhs_feasibility_fmincon')
+case 'lhs_feasibility_fmincon'
     original_cost = param.objfun;
     param.objfun = 'feasibility';
     param.fg{1} = {'lhs_fmincon'};
@@ -75,7 +76,7 @@ elseif strcmp(param.fg{1},'lhs_feasibility_fmincon')
     population = c0_opt;
     param.objfun = original_cost;
     usefmincon = 1;
-else                                    % skip first guess
+otherwise                                    % skip first guess
     disp ('Skipping Direct multiple shooting first guess optimisation')
     disp('-------------------------------------------------------------------')
     return
@@ -117,32 +118,7 @@ else
 end
 exitflag = 0;  runs = 1;
 
-% Matlab GA
-if usega == 1                                                               % run matlab GA routine
-    disp('Matlab GA started')
-    timeval = tic;                                                          % start timing
-    param.feq=0;                                                            % use inequality constraints
-    gaoptions = gaoptimset('Display','iter','Generations',50,'PopulationSize',popsz,...
-                'UseParallel',true,'TimeLimit',60*popsz,'InitialPopulation',population,...
-                'Tolcon',1e-3);
-    while exitflag<1 && runs <=3                                               % run GA algorithm *runs* times
-        [c0_optGA,~,exitflag,~,population,scores] = ga_objconstr (c0, LB, UB, gaoptions, param, phases);   
-        runs = runs+1;                                                      % run until solution find or max 3 times
-    end
-    if exitflag > 0                                                            % if GA succeded
-        population = sortrows([population,scores],size(population,2)+1);    % reorder with scores
-        population = population(:,1:end-1);                                 % remove scores
-        [c0_opt] = find_best (c0_optGA, c0_opt, param, phases);    % check if solution is the new best
-    else                                                                    % if ga failed, restart LHS population
-        population = [ c0; bsxfun(@plus,bsxfun(@times,lhsdesign(popsz-1,size(c0,2)),(UB-LB)),LB)];
-    end
-    dureval = toc(timeval);                                                 % end timing
-    disp(['Matlab GA completed, duration: ', num2str(dureval),' s'])
-    disp('-------------------------------------------------------------------')
-    population(1,:)=c0_opt;                                                 % first vector is now GA solution
-    param.feq=1;
-    exitflag=repmat(exitflag,popsz,1); % fix for refinement
-end
+
 
 % Fmincon
 if usefmincon == 1
@@ -238,15 +214,6 @@ disp('-------------------------------------------------------------------')
 %% final checks
 if size(c0_opt,2) ~= size(c0,2)                                             % check if there is a size error
     error('size of the output of fg_gen.m is different from the input')
-end
-
-for chep = 1:size(c0,2)                                                     % check if all values are between bounds
-    if c0_opt(chep)>UB(chep) || c0_opt(chep)<LB(chep)
-        disp(['ne: ',num2str(ne),' nc: ',num2str(nc)])
-        disp(['index: ',num2str(chep),' c0_opt(chep)= ',num2str(c0_opt(chep)),...
-            ' LB(chep)= ',num2str(LB(chep)),' UB(chep)= ',num2str(UB(chep)),])
-        warning('some values of the output of fg_gen.m are out of bounds')
-    end
 end
 
 end

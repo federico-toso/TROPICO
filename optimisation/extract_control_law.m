@@ -17,6 +17,7 @@ Technology, Univeristy of Strathclyde
 k=1;
 index = 1;
 for ip = 1 : param.np                                                       % select phase
+    phases(ip).odet = phases(ip).nc*2;                                        % odet moved from  
     for ine = 1 : phases(ip).ne                                             % select element
         %% extract res.t and res.control
         res(index).control=zeros(phases(ip).nc, param.nv+1);                % initialize control matrix 
@@ -38,7 +39,7 @@ for ip = 1 : param.np                                                       % se
         res(index).control(:,1)=phases(ip).dist(0, tof, phases(ip).nc)';    % create first column of the control matrix with time
         k=k+1;
         %% extract res.x0
-        if isempty(phases(ip).x0_no_opt) || ine ~=1                     % if all x0 are optimisation variables
+        if isempty(phases(ip).x0_fixed) || ine ~=1                     % if all x0 are optimisation variables
             if ip>1 && ine ==1                                          % staging
                 if phases(ip).vehicle.gtow==phases(ip-1).vehicle.gtow   % no staging, optimise mass
                     res(index).x0=c_opt(k:k+6);                         % matching
@@ -62,7 +63,7 @@ for ip = 1 : param.np                                                       % se
             end
         else
             for ins = 1 : size(phases(ip).xbounds,1)                    % for each state variable
-                if phases(ip).x0_no_opt(ins)~=1                         % if it is not fixed
+                if phases(ip).x0_fixed(ins)~=1                         % if it is not fixed
                         res(index).x0(ins)=c_opt(k);                    % if it's not fixed, take value from c_opt
                         k=k+1;
                 else

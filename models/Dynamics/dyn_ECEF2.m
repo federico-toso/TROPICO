@@ -61,7 +61,7 @@ controls=max(min(controls(:),phases.cbounds(:,2)), phases.cbounds(:,1));    % li
 alpha = controls(1);
 throttle = controls(2);
 bank = controls(3);
-con.controls = controls;
+con.controls = reshape(controls,[1,3]);
 
 if h <= 0 || m <= 0 || v <= 0
     dx =zeros(7,1);
@@ -69,6 +69,7 @@ if h <= 0 || m <= 0 || v <= 0
     con.Mn = 0;
     con.forces = zeros(1,4);
     con.temp = 0;
+    con.atmo = [0,0,0,0];
     return
 end
 
@@ -76,21 +77,29 @@ end
 % to determine pressure P, density rho and the speed of sound a at a given altitude h
 [P_h, rho_h, a_h, T_h] = phases.atmo(h);
 Mn = abs(v)/a_h;          % mach number
-
+% >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+atmo = [P_h, rho_h, a_h, T_h];
+% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 %% Propulsion model
 % Determines the level of thrust (N) and fuel mass flow rate (kg/s) for the
 % vehicle at a given altitude and mach number
 alpha_eng=alpha+phases.vehicle.Tangle;  % accounts for any thrust angular offset from body axis
-[FT, mp] = phases.prop (throttle, Mn, P_h, T_h, t);
-
+% [FT, mp] = phases.prop (throttle, Mn, P_h, T_h, t);
+% >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+[FT,mp] = phases.prop(x, controls, atmo, 1);
+% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 %% Aerodynamics
 % Determines the coefficients of lift and drag given the mach number and
 % angle of attack, and calculates the lift and drag coefficients acting on
 % the vehicle
-[CD, CL] =  phases.aero(Mn, alpha, phases.vehicle, phases, 1);
+
+% >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+[D, L] = phases.aero(x, controls, atmo, phases.vehicle);
+% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+% [CD, CL] =  phases.aero(Mn, alpha, phases.vehicle, phases, 1);
 q = 0.5*rho_h*(a_h*Mn)^2;
-L = CL*phases.vehicle.Sgross*q;
-D = CD*phases.vehicle.Sgross*q;
+% L = CL*phases.vehicle.Sgross*q;
+% D = CD*phases.vehicle.Sgross*q;
 
 %% Thermodynamics
 [con.temp] = phases.thermal(T_h, rho_h, v, phases.vehicle, const.sb);
@@ -111,7 +120,8 @@ else
     dlon = v.*cos(fpa).*sin(chi)./(r.*cos(lat));
 end
 
-Fx = (FT.*cos(alpha_eng)*cos(bank) - D)./m - gr.*sin(fpa) + gt*cos(fpa)*cos(chi);
+% Fx = (FT.*cos(alpha_eng)*cos(bank) - D)./m - gr.*sin(fpa) + gt*cos(fpa)*cos(chi);
+Fx = (FT.*cos(alpha_eng) - D)./m - gr.*sin(fpa) + gt*cos(fpa)*cos(chi);
 dv = Fx + const.wE.^2.*r.*cos(lat).*(sin(fpa).*cos(lat) - cos(fpa).*cos(chi).*sin(lat));
 if abs(v) < eps(1)
     dfpa = 0;
@@ -132,14 +142,15 @@ dm = -mp;
 dx = [dh; dv; dfpa; dchi; dlat; dlon; dm];
 % dx,x,keyboard
 
-accx = (FT.*cos(alpha_eng)-D.*cos(alpha)+L.*sin(alpha))./m;%-gr*sin(fpa+alpha);
-accz = -(L.*cos(alpha)+D.*sin(alpha)+FT.*sin(alpha_eng))./m;%+gr*cos(fpa+alpha);
+accx = (FT.*cos(alpha_eng)-D.*cos(alpha)+L.*sin(alpha))./m; % -gr*sin(fpa+alpha) ;
+accz = -(L.*cos(alpha)+D.*sin(alpha)+FT.*sin(alpha_eng))./m; % -gr*cos(fpa+alpha) +const.g0;
 
 con.acc = [accx, accz];
 % con.state = x;
 % con.control = controls;
 con.Mn = Mn;
 con.forces = [L,D,FT,q];
+con.atmo = atmo;
 return
 
 function [gr, gt]=dyn_gravity(r, lat,const)

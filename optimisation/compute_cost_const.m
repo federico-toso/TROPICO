@@ -211,7 +211,7 @@ if isfield(param,'c')
         case 'c_temp' % constrain temperature
             c = [c; max(thermal)/param.c{ic,2}(1)-1];                           % i.e. {'c_temp',3000}
         case 'c_maxq' % constrain max dynamic pressure
-            c = [c; max(forces(4))/param.c{ic,2}(1)-1];                         % i.e. {'c_maxq',2e6}
+            c = [c; max(forces(:,4))/param.c{ic,2}(1)-1];                         % i.e. {'c_maxq',2e6}
         end
     end
 end
@@ -254,6 +254,8 @@ case 'max_payload'   % maximize final mass
     cost_function = -res(end).x(end,7)/1e3;
 case 'min_gtow'      % minimize initial mass
     cost_function = res(1).x(1,7)/1e5;
+case 'max_altitude'     % maximize final altitude
+	cost_function = -res(end).x(end,1)/1e6; 
 case 'max_speed'     % maximize final speed
 	cost_function = -res(end).x(end,2)/1e4;   
 case 'min_peak_heat' % minimize max temperature

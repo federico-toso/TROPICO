@@ -43,9 +43,9 @@ phases(i).xbounds = [10, 100e3;...            % altitude
                      phases(i).vehicle.m0, phases(i).vehicle.gtow+1];                           % mass
 phases(i).cbounds = [-20*pi/180, 20*pi/180; 0.75, 1; 0, 0]; % [min, max] for alpha, throttle, beta
 
-phases(i).tof = [60; 180];          % bounds for time of flight for the phase
-phases(i).ode = @ode2;
-phases(i).tstep= 2;                 % minimum timestep [seconds]
+phases(i).tof = [60; 240];          % bounds for time of flight for the phase
+phases(i).ode = @ode4;
+phases(i).tstep= 1;                 % minimum timestep [seconds]
 
 
 
@@ -68,8 +68,8 @@ phases(i).xf =          [200e3, 2e3, 0, pi/2, 0, 0, 50e3];
 phases(i).xf_fixed =    [1, 0, 0, 0, 0, 0, 0];                              % id of target  value
 phases(i).ceq = {'ceq_circ',0};
 
-phases(i).xbounds = [50e3, 200e3;...            % altitude
-                     2e3, 8e3; ...           % velocity
+phases(i).xbounds = [30e3, 200e3;...            % altitude
+                     1e3, 8e3; ...           % velocity
                      -pi/2, pi/2; 0, 2*pi; ...                                  % FPA, heading
                      -pi/2, pi/2; -pi, pi; ...       % lat, lon
                      phases(i).vehicle.m0, phases(i).vehicle.gtow+1];                           % mass
@@ -77,8 +77,8 @@ phases(i).cbounds = [-20*pi/180, 20*pi/180; 0, 1; 0, 0]; % [min, max] for alpha,
 phases(i).controls_no_match = [0, 1 ,0];
 
 phases(i).tof = [120; 600];          % bounds for time of flight for the phase
-phases(i).ode = @ode2;
-phases(i).tstep= 2;                 % minimum timestep [seconds]
+phases(i).ode = @ode4;
+phases(i).tstep= 1;                 % minimum timestep [seconds]
 
 
 %% general constraints, cost function, settings and additional variables
@@ -89,7 +89,7 @@ param.objfun = 'max_payload';
 % param.bias_obj_const = [1e0,1e0];
 
 % first guess parameters---------------------------------------------------
-param.fg = {'n_individuals',50;
+param.fg = {'n_individuals',30;
             'distribution','random'};
 %             'noise',1e-3;
 %             'seed','case22'};
